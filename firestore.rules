@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - displayName: string
+    //   - role: string ('student', 'teacher')
+    //   - badgeCount: number
+    //   - createdAt: timestamp
+    //
+    // Collection: logs
+    // Document ID: {logId}
+    // Fields:
+    //   - studentId: string (required)
+    //   - studentName: string
+    //   - title: string (required)
+    //   - content: string (required)
+    //   - imageUrl: string
+    //   - aiFeedback: string
+    //   - createdAt: timestamp
+    //
+    // Collection: badges
+    // Document ID: {badgeId}
+    // Fields:
+    //   - studentId: string (required)
+    //   - type: string (required)
+    //   - awardedAt: timestamp
+    //
+    // ===============================================================
+
+    // Collection: settings
+    // Document ID: {className}
+    // Fields:
+    //   - className: string (required)
+    //   - badgesEnabled: boolean
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher' ||
+         (request.auth.token.email == "snaillee524@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'role']) &&
+             data.uid is string &&
+             data.role in ['student', 'teacher'];
+    }
+
+    function isValidLog(data) {
+      return data.keys().hasAll(['studentId', 'title', 'content']) &&
+             data.studentId is string &&
+             data.title is string && data.title.size() < 200 &&
+             data.content is string && data.content.size() < 10000;
+    }
+
+    // Rules
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if (isOwner(userId) || isAdmin()) && isValidUser(request.resource.data);
+    }
+
+    match /logs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidLog(request.resource.data) && request.resource.data.studentId == request.auth.uid;
+      allow update: if isAdmin() || (isAuthenticated() && resource.data.studentId == request.auth.uid && isValidLog(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.studentId == request.auth.uid);
+    }
+
+    match /badges/{badgeId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.studentId == request.auth.uid; // Students can get badges via app logic
+      allow update, delete: if isAdmin();
+    }
+
+    match /settings/{className} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+  }
+}

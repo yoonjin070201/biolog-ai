@@ -1,0 +1,5 @@
+{
+  "name": "BioLog AI - AI 생물 관찰일지",
+  "description": "초등학생을 위한 AI 기반 생물 관찰일지 웹앱. 학생은 관찰 일지를 작성하고 AI 분석을 받으며, 교사는 학급 활동을 관리합니다.",
+  "requestFramePermissions": ["camera", "microphone"]
+}

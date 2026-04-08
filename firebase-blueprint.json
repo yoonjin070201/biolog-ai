@@ -1,0 +1,76 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "사용자 정보 (학생 또는 교사)",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["student", "teacher"] },
+        "className": { "type": "string" },
+        "studentNumber": { "type": "string" },
+        "badgeCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "role"]
+    },
+    "ClassSettings": {
+      "title": "Class Settings",
+      "description": "학급별 설정 (배지 활성화 등)",
+      "type": "object",
+      "properties": {
+        "className": { "type": "string" },
+        "badgesEnabled": { "type": "boolean" }
+      },
+      "required": ["className"]
+    },
+    "ObservationLog": {
+      "title": "Observation Log",
+      "description": "생물 관찰 일지",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "aiFeedback": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studentId", "title", "content"]
+    },
+    "Badge": {
+      "title": "Badge",
+      "description": "학생이 획득한 배지",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "type": { "type": "string" },
+        "awardedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studentId", "type"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "사용자 프로필"
+    },
+    "/logs/{logId}": {
+      "schema": "ObservationLog",
+      "description": "관찰 일지 목록"
+    },
+    "/badges/{badgeId}": {
+      "schema": "Badge",
+      "description": "배지 획득 내역"
+    },
+    "/settings/{className}": {
+      "schema": "ClassSettings",
+      "description": "학급별 설정"
+    }
+  }
+}
